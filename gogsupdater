@@ -1,0 +1,54 @@
+#! /bin/sh
+
+set -o nounset
+set -o errexit
+
+# Check if script is called correctly
+if [ $# -ne 1 ]; then
+	echo "Usage: $0 <version>"
+	echo "\t exemple : $0 0.8.10"
+	exit 1
+fi
+
+ARCH=amd64
+OS=linux
+VERSION=$1
+FILEEXT=tar.gz
+FILENAME=gogs_v"$VERSION"_"$OS"_"$ARCH"."$FILEEXT"
+
+echo "$ARCH"
+echo "$OS"
+echo "$VERSION"
+echo "$FILEEXT"
+echo "$FILENAME"
+
+BASEDIR=/home/git
+
+cd $BASEDIR || { echo "Update ABORDED."; exit 1; }
+
+#Try to download the given version
+wget https://dl.gogs.io/$FILENAME
+if [ ! -f $FILENAME ]; then
+	echo "There is no file to download, update ABORDED."
+	exit 1
+fi
+
+#Backup old gogs if needed
+if [ -d "gogs" -a -d "gogs/custom" ]; then		# No custom directory = fresh extraction (without any installation)
+	mv gogs gogs_backup
+fi
+
+# Extract new gogs (downloaded before)
+tar -zxvf $FILENAME > /dev/null || { rm -f -R gogs/; mv gogs_backup gogs; }
+
+# Restore data from old gogs and clean
+if [ -d "gogs_backup" ]; then
+	cp -R gogs_backup/custom gogs
+	cp -R gogs_backup/data gogs
+	cp -R gogs_backup/log gogs
+	rm -f -R gogs_backup/
+fi
+rm $FILENAME
+
+
+
