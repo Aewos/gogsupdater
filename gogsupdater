@@ -10,11 +10,11 @@ if [ $# -ne 1 ]; then
 	exit 1
 fi
 
-ARCH=amd64
+ARCH=armv5
 OS=linux
 VERSION=$1
-FILEEXT=tar.gz
-FILENAME=gogs_v"$VERSION"_"$OS"_"$ARCH"."$FILEEXT"
+FILEEXT=zip
+FILENAME="$OS"_"$ARCH"."$FILEEXT"
 
 echo "$ARCH"
 echo "$OS"
@@ -27,7 +27,7 @@ BASEDIR=/home/git
 cd $BASEDIR || { echo "Update ABORDED."; exit 1; }
 
 #Try to download the given version
-wget https://dl.gogs.io/$FILENAME
+wget https://cdn.gogs.io/$VERSION/$FILENAME
 if [ ! -f $FILENAME ]; then
 	echo "There is no file to download, update ABORDED."
 	exit 1
@@ -39,13 +39,15 @@ if [ -d "gogs" -a -d "gogs/custom" ]; then		# No custom directory = fresh extrac
 fi
 
 # Extract new gogs (downloaded before)
-tar -zxvf $FILENAME > /dev/null || { rm -f -R gogs/; mv gogs_backup gogs; }
+unzip $FILENAME > /dev/null || { rm -f -R gogs/; mv gogs_backup gogs; }
 
 # Restore data from old gogs and clean
 if [ -d "gogs_backup" ]; then
 	cp -R gogs_backup/custom gogs
 	cp -R gogs_backup/data gogs
 	cp -R gogs_backup/log gogs
+	chmod a+x gogs/scripts/init/debian/gogs
+	rm -f -R __MACOSX
 	rm -f -R gogs_backup/
 fi
 rm $FILENAME
